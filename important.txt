@@ -1,0 +1,25 @@
+pip install -r requirements.txt
+
+
+python3 -m venv venv 
+source venv/bin/activate   #macbook
+
+
+uvicorn src.deployment.serve:app --reload
+
+✅ 4. View API Docs in Browser
+Open a browser and go to:
+
+Swagger UI: http://127.0.0.1:8000/docs
+
+ReDoc: http://127.0.0.1:8000
+
+source venv/bin/activate  # macOS/Linux
+
+python -m venv venv # windows
+
+venv\Scripts\activate  # Windows
+
+streamlit run src/dashboard/app.py
+
+
