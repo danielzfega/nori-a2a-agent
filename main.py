@@ -11,27 +11,27 @@ def clean_prompt(text: str) -> str:
     text = re.sub(r"<[^>]*>", "", text)   
     return text.replace("\n", " ").strip()
 
-
 def extract_text_from_parts(parts):
-    texts = []
-
-    for p in parts:
+    # Only look for the last true TEXT message from the USER
+    for p in reversed(parts):
         if p.get("kind") == "text" and p.get("text"):
-            texts.append(p["text"])
+            txt = p["text"].strip()
 
-        # ignore system-generated echoes inside data blocks
-        if p.get("kind") == "data" and isinstance(p.get("data"), list):
-            for inner in p["data"]:
-                if inner.get("kind") == "text" and inner.get("text"):
-                    # skip repeated UI feedback / echoes
-                    if not inner["text"].lower().startswith(("fetching", "here are", "box office", "as shutdown", "<p>")):
-                        texts.append(inner["text"])
+            # Ignore AI echoes or UI strings
+            if txt.lower().startswith(("fetching", "here are", "checking")):
+                continue
+            if txt.lower() in ["", "<br />", "<p></p>"]:
+                continue
 
-    if not texts:
-        return None
+            # Strip HTML
+            txt = re.sub(r"<[^>]*>", "", txt).strip()
 
-    # return the LAST user text (most recent message)
-    return clean_prompt(texts[-1])
+            # Return clean last user text only
+            return clean_prompt(txt)
+
+    return None
+
+
 
 
 
