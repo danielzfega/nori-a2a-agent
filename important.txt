@@ -1,8 +1,7 @@
 pip install -r requirements.txt
 
-
-python3 -m venv venv 
-source venv/bin/activate   #macbook
+python -m venv venv # windows
+venv\Scripts\activate  # Windows
 
 
 uvicorn src.deployment.serve:app --reload
@@ -14,11 +13,8 @@ Swagger UI: http://127.0.0.1:8000/docs
 
 ReDoc: http://127.0.0.1:8000
 
-source venv/bin/activate  # macOS/Linux
 
-python -m venv venv # windows
 
-venv\Scripts\activate  # Windows
 
 streamlit run src/dashboard/app.py
 
