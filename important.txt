@@ -1,10 +1,18 @@
 pip install -r requirements.txt
 
+python3 -m venv venv 
+source venv/bin/activate   #macbook
+
 python -m venv venv # windows
 venv\Scripts\activate  # Windows
 
+# Initialize pyproject.toml
+touch pyproject.toml
 
-uvicorn src.deployment.serve:app --reload
+# Install dependencies
+pip install -e .
+
+
 
 ✅ 4. View API Docs in Browser
 Open a browser and go to:
@@ -15,7 +23,5 @@ ReDoc: http://127.0.0.1:8000
 
 
 
-
-streamlit run src/dashboard/app.py
 
 
