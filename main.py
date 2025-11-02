@@ -13,17 +13,26 @@ def clean_prompt(text: str) -> str:
 
 
 def extract_text_from_parts(parts):
-    """
-    ✅ Only extract true user text input.
-    ❌ Do NOT extract from .data because Telex puts log history there.
-    """
-    try:
-        for p in parts:
-            if p.get("kind") == "text" and p.get("text"):
-                return clean_prompt(p["text"])
-    except:
-        pass
-    return None
+    texts = []
+
+    for p in parts:
+        if p.get("kind") == "text" and p.get("text"):
+            texts.append(p["text"])
+
+        # ignore system-generated echoes inside data blocks
+        if p.get("kind") == "data" and isinstance(p.get("data"), list):
+            for inner in p["data"]:
+                if inner.get("kind") == "text" and inner.get("text"):
+                    # skip repeated UI feedback / echoes
+                    if not inner["text"].lower().startswith(("fetching", "here are", "box office", "as shutdown", "<p>")):
+                        texts.append(inner["text"])
+
+    if not texts:
+        return None
+
+    # return the LAST user text (most recent message)
+    return clean_prompt(texts[-1])
+
 
 
 def safe_parse_rpc(body):
@@ -45,15 +54,40 @@ def extract_prompt(rpc, body):
     )
 
     text = extract_text_from_parts(msg)
-    if text:
-        task_id = (
-            body.get("params", {}).get("message", {}).get("taskId")
-            or body.get("params", {}).get("taskId")
-            or rpc.id
-        )
-        return text, task_id
 
-    return "Give me the latest tech news.", rpc.id
+    # Default if unclear input
+    if not text or len(text) < 2:
+        text = "latest news"
+
+    # de-duplicate multiple repeated phrases
+    text = re.sub(r"(\b.+?\b)(?:\s+\1\b)+", r"\1", text)
+
+    task_id = (
+        body.get("params", {}).get("message", {}).get("taskId")
+        or body.get("params", {}).get("taskId")
+        or rpc.id
+    )
+
+    return text, task_id
+
+
+# def extract_prompt(rpc, body):
+#     msg = (
+#         body.get("params", {}).get("message", {}).get("parts")
+#         or body.get("params", {}).get("messages", [{}])[-1].get("parts")
+#         or []
+#     )
+
+#     text = extract_text_from_parts(msg)
+#     if text:
+#         task_id = (
+#             body.get("params", {}).get("message", {}).get("taskId")
+#             or body.get("params", {}).get("taskId")
+#             or rpc.id
+#         )
+#         return text, task_id
+
+#     return "Give me the latest tech news.", rpc.id
 
 
 @app.post("/a2a/nori")
