@@ -9,21 +9,37 @@ async def handle_a2a(req: Request):
     body = await req.json()
     rpc = JSONRPCRequest(**body)
 
-    # Extract user prompt
+    # Extract user prompt safely for both a2a request formats
+    user_prompt = ""
+
     if rpc.method == "message/send":
-        prompt = rpc.params.message.parts[0].text
-        task_id = rpc.params.message.taskId
+        # v1 style messaging
+        parts = rpc.params.message.parts
+        # Extract first text part
+        for p in parts:
+            if p.kind == "text":
+                user_prompt = p.text
+                break
+        task_id = getattr(rpc.params.message, "taskId", rpc.id)
+
     else:
-        prompt = rpc.params.messages[-1].parts[0].text
+        # v2 execution call (assistant / workflow use)
+        messages = rpc.params.messages
+        last_msg = messages[-1]
+        for p in last_msg.parts:
+            if p.kind == "text":
+                user_prompt = p.text
+                break
         task_id = rpc.params.taskId
 
+    # === AGENT LOGIC ===
     headlines = await fetch_top_news()
     raw = "\n".join(headlines)
     summary = await summarize(raw)
 
     agent_msg = A2AMessage(
         role="agent",
-        parts=[MessagePart(kind="text", text=summary)],
+        parts=[MessagePart(kind="text", text=f"📰 **Today's Tech Update**\n\n{summary}")],
         taskId=task_id
     )
 
