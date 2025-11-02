@@ -128,9 +128,11 @@ async def handle_a2a(req: Request):
             state = "completed"
 
     except Exception as e:
+        print(f"❌ ERROR: {repr(e)}")  # <-- Add this
         response_text = f"⚠️ Nori Error: {str(e)}"
         raw_news = ""
         state = "failed"
+
 
     agent_msg = A2AMessage(
         role="agent",
